@@ -1,0 +1,109 @@
+-- Created by {{ user }} on {{ datetime_now }} using the following command:
+-- {{ command }}
+
+--=======
+RUNSPEC
+--=======
+
+TITLE
+ '{{ case_name }}'
+
+DIMENS
+ 1 1 1 /
+
+METRIC
+
+OIL
+WATER
+GAS
+DISGAS
+VAPOIL
+
+START
+ {{ start_date }} /
+
+--NOSIM
+
+TABDIMS
+ 1  1  37  60  1*  60  4*  35 /
+
+WELLDIMS
+ 1* 1*  {{ number_of_master_groups }} /
+
+VFPPDIMS
+ 70 15 10 15 15 700 /
+
+VFPIDIMS
+ 20  20  600 /
+
+ACTDIMS
+-- MxActions  MxLines  MxLineLen   MxConditions
+       120     1000       128          10 /
+
+UDQDIMS
+ 12 12 2 150 2 2 0 2 /
+
+UDQPARAM
+ 2 1e19 -1.0 /
+
+UDADIMS
+ 100 1000 /
+
+SMRYDIMS
+ 30000 /
+
+ENDSCALE
+ 2* 25 /
+
+NSTACK             
+ 25 /
+
+UNIFIN
+UNIFOUT
+
+MESSAGES
+ 2* 2000 2*
+ 2* 2000  100000000 /
+
+MSGFILE
+ 0 /
+
+--=======
+GRID
+--=======
+
+INCLUDE
+ '../include/grid/master.dummy.inc' /
+
+GRIDFILE
+ 0 1 /
+
+--=======
+PROPS
+--=======
+
+INCLUDE
+ '../include/props/master.dummy.inc' /
+
+--=======
+SOLUTION
+--=======
+
+INCLUDE
+ '../include/solution/master.dummy.inc' /
+
+--=======
+SUMMARY
+--=======
+
+INCLUDE
+ '../include/summary/{{ summary_filename }}' /
+
+--=======
+SCHEDULE
+--=======
+
+INCLUDE
+ '../include/schedule/master.sch' /
+
+END
