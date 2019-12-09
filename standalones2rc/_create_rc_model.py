@@ -11,6 +11,7 @@ from matplotlib.dates import strpdate2num, num2date
 from ._copy_include_files import copy_include_files
 from ._section_dictionary import section_dictionary
 from ._master_datafile import master_datafile
+from ._merge_schedule import merge_schedule
 
 converter = strpdate2num("%d %b %Y %H:%M:%S")
 
@@ -362,21 +363,15 @@ def create_rc_model(
 
     # Merge the different schedule files:
 
-    os.system(
-        "merge_schedule "
-        + outputfolder
-        + "/include/schedule/master.gruptree.sch "
-        + outputfolder
-        + "/include/schedule/master.grupmast.sch "
-        + outputfolder
-        + "/include/schedule/master.gconprod.sch "
-        + outputfolder
-        + "/include/schedule/master.gconinje.sch "
-        + schfile
-        + " "
-        + outputfolder
-        + "/include/schedule/master.sch > /dev/null"
-    )
+    inputfiles = [
+        outputfolder + "/include/schedule/master.gruptree.sch",
+        outputfolder + "/include/schedule/master.grupmast.sch",
+        outputfolder + "/include/schedule/master.gconprod.sch",
+        outputfolder + "/include/schedule/master.gconinje.sch",
+        schfile,
+    ]
+
+    merge_schedule(inputfiles, outputfolder + "/include/schedule/master.sch")
 
     #####################################
     # CREATE DUMMY MASTER INCLUDE FILES #
