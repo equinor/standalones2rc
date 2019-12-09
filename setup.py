@@ -17,9 +17,9 @@ setup(
     url="https://github.com/equinor/standalones2rc",
     author="R&T Equinor",
     packages=find_packages(exclude=["tests"]),
+    package_data={"standalones2rc": ["templates/*",]},
     entry_points={"console_scripts": ["standalones2rc=standalones2rc:main"]},
-    install_requires=[
-    ],
+    install_requires=["numpy", "matplotlib", "jinja2"],
     tests_require=TESTS_REQUIRES,
     extras_require={"tests": TESTS_REQUIRES},
     setup_requires=["setuptools_scm~=3.2"],
