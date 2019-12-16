@@ -43,7 +43,7 @@ def create_rc_model(
 
     # Parse the GRUPTREE in the user given master .sch file:
 
-    f = open(schfile, "r")
+    f = open(schfile, "r", encoding="utf-8", errors="ignore")
     content = f.readlines()
     f.close()
 
