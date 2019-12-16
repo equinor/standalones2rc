@@ -5,7 +5,7 @@ from matplotlib.dates import date2num, num2date
 
 
 def read_schedule_file(filename):
-    f = open(filename, "r")
+    f = open(filename, "r", encoding="utf-8", errors="ignore")
     content = f.readlines() + [
         "\n\n"
     ]  # Added extra line break to cope with text files saved on Windows
