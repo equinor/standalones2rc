@@ -5,15 +5,14 @@ import os
 import copy
 import shutil
 import pathlib
+from datetime import datetime
 
-from matplotlib.dates import strpdate2num, num2date
+from matplotlib.dates import date2num, num2date
 
 from ._copy_include_files import copy_include_files
 from ._section_dictionary import section_dictionary
 from ._master_datafile import master_datafile
 from ._merge_schedule import merge_schedule
-
-converter = strpdate2num("%d %b %Y %H:%M:%S")
 
 MODULE_FOLDER = pathlib.Path(__file__).parent.absolute()
 
@@ -91,7 +90,7 @@ def create_rc_model(
             if not ":" in date:
                 date += " 00:00:00"
 
-            numdate = converter(date)
+            numdate = date2num(datetime.strptime(date, "%d %b %Y %H:%M:%S"))
 
     # Parse the data in slave .sch file (if given by user):
 
@@ -128,7 +127,7 @@ def create_rc_model(
                 if not ":" in date:
                     date += " 00:00:00"
 
-                numdate = converter(date)
+                numdate = date2num(datetime.strptime(date, "%d %b %Y %H:%M:%S"))
 
             else:
                 if not numdate in slave_keywords:

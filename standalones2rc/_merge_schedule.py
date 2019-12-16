@@ -1,10 +1,10 @@
 import os
-from matplotlib.dates import strpdate2num, num2date
+from datetime import datetime
+
+from matplotlib.dates import date2num, num2date
 
 
 def read_schedule_file(filename):
-    converter = strpdate2num("%d %b %Y %H:%M:%S")
-
     f = open(filename, "r")
     content = f.readlines() + [
         "\n\n"
@@ -29,7 +29,7 @@ def read_schedule_file(filename):
             if not ":" in date:
                 date += " 00:00:00"
 
-            dates.append(converter(date))
+            dates.append(date2num(datetime.strptime(date, "%d %b %Y %H:%M:%S")))
             keywords.append("")
         else:
             keywords[-1] += line

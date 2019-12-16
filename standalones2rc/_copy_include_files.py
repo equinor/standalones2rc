@@ -1,10 +1,9 @@
 # This is an old, ugly script - to be cleaned.
 
 import os
+from datetime import datetime
 
-from matplotlib.dates import strpdate2num, num2date
-
-converter = strpdate2num("%d %b %Y %H:%M:%S")
+from matplotlib.dates import date2num, num2date
 
 
 def copy_include_files(
@@ -270,7 +269,7 @@ def copy_include_files(
             if not ":" in start_date:
                 start_date += " 00:00:00"
 
-            START_NUMDATE[slavename] = converter(start_date)
+            START_NUMDATE[slavename] = date2num(datetime.strptime(start_date, "%d %b %Y %H:%M:%S"))
 
         ############## Process DATES keywords ##############
 
@@ -293,7 +292,7 @@ def copy_include_files(
                 "linenumber": j,
             }
 
-            current_numdate = converter(date)
+            current_numdate = date2num(datetime.strptime(date, "%d %b %Y %H:%M:%S"))
 
             for numdate in sorted(SLAVE_SCH):
                 if (
