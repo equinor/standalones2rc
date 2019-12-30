@@ -1,6 +1,6 @@
 # standalones2rc
 
-> :warning: This tool is currently in _**alpha**_ version - not production ready.
+> :warning: This tool is currently in _**alpha**_ version. It is not production ready and breaking changes will occur.
 
 `standalones2rc` is a tool that automatically creates a reservoir coupled model from standalone models. An arbitrary number of input standalone models can be given.
 
@@ -38,11 +38,11 @@ After running the command, a directory structure similar to the one below will a
 ```
 The directory structure is set up such that it agrees with FMU naming conventions. The include files will automatically be copied from the locations used in the different stand alone models, and into the RC model's `include` folder. Also, the include files will be renamed such that it has the slavename as a prefix (i.e. `lor.` or `ips.` in this example), if this prefix doesn't already exist. Also, the include files will automatically be placed in the subfolder associated with the Eclipse section it is used in (regardless of the standalone models follow this convention or not).
 
-## What does standalones2rc do in practice?
+### What does standalones2rc do in practice?
 
 It is usually not necessary to know the details below, but for an experienced RC engineer it might be useful to know specifically what <span style="font-family:Courier;">standalones2rc</span> does (and doesn't).
 
-## Linking the slaves to the master
+### Linking the slaves to the master
 
 The main idea is that the **slaves model the reservoirs only** (including conversion up to well head conditions), while the **master model takes care of the rest of the production network** (from well head all the way to inlet pressure).
 
@@ -58,7 +58,7 @@ Since we create quite some extra dummy groups, the third argument in the keyword
 >   - Well-names must be unique (i.e. the same well name should not be used in different input standalone models).</li>
 >   - All groups connected to wells in the standalones (_A_ and _B_ in the example above) must be present in the `GRUPTREE` in the master model.
 
-## Misc. changes done by standalones2rc
+### Misc. changes done by standalones2rc
 
 * The start date of the master `.DATA` file is set to be the earliest start date among the slaves.
 * A `SLAVES` entry is added to the Eclipse master model, defining the slave names and corresponding `.DATA` files.
