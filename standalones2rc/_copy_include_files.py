@@ -208,7 +208,7 @@ def copy_include_files(
                     + " is used in standalone corresponding to slave "
                     + slavename
                     + " before it is defined in the GRUPTREE in "
-                    + args.schfile
+                    + schfile
                     + ". If not corrected, this will give an ERROR in Eclipse."
                 )
 
@@ -473,18 +473,18 @@ def copy_include_files(
         elif line == "PARALLEL":
             IN_PARALLEL = True
 
-            if args.cpus[args.slavenames.index(slavename)] == 1:
+            if cpus[slavenames.index(slavename)] == 1:
                 content[j] = "-- commented out by standalones2rc: " + content[j]
 
-            PARALLEL[args.slavenames[i]] = True
+            PARALLEL[slavenames.index(slavename)] = True
 
         elif IN_PARALLEL and "/" in line:
             data = line.split()
 
-            if args.cpus[args.slavenames.index(slavename)] == 1:
+            if cpus[slavenames.index(slavename)] == 1:
                 content[j] = "-- commented out by standalones2rc: " + content[j]
             else:
-                data[0] = str(args.cpus[args.slavenames.index(slavename)])
+                data[0] = str(cpus[slavenames.index(slavename)])
                 content[j] = (
                     " "
                     + " ".join(data)
