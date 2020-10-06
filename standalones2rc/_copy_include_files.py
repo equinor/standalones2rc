@@ -47,6 +47,9 @@ def copy_include_files(
 
     IN_PARALLEL = False
     IN_INCLUDE = False
+    IN_ACTION: int = (
+        0  # Actions may be nested, therefore using a counter to track exit.
+    )
     IN_WELSPECS = False
     IN_DATES = False
     IN_WELLDIMS = False
@@ -133,6 +136,25 @@ def copy_include_files(
                 SLAVE_SCH,
                 GCONPROD,
                 wconprod,
+            )
+
+        ############## Process ACTIONS keywords ##############
+        # Not allowing actions in slaves.
+        elif (
+            line in ["ACTION", "ACTIONR", "ACTIONW", "ACTIONS", "ACTIONX", "DELAYACT"]
+            and "keep in reservoir coupled model" not in comment
+            and "keep in rc model" not in comment
+        ):
+            IN_ACTION += 1  # Actions may be nested, therefore using a counter to track if we are in an action.
+            content[j] = "-- commented out by standalones2rc: " + content[j]
+        elif IN_ACTION > 0:
+            if line == "ENDACTIO":
+                IN_ACTION -= 1
+            content[j] = "-- commented out by standalones2rc: " + content[j]
+        elif line == "ENDACTION":  # ENDACTION without being in an action
+            raise ValueError(
+                "Encountered ENDACTIO without a preceding action keyword:"
+                "ACTION, ACTIONR, ACTIONW, ACTIONS, ACTIONX, DELAYACT."
             )
 
         ############## Process WELSPECS keywords ##############
@@ -269,7 +291,9 @@ def copy_include_files(
             if not ":" in start_date:
                 start_date += " 00:00:00"
 
-            START_NUMDATE[slavename] = date2num(datetime.strptime(start_date, "%d %b %Y %H:%M:%S"))
+            START_NUMDATE[slavename] = date2num(
+                datetime.strptime(start_date, "%d %b %Y %H:%M:%S")
+            )
 
         ############## Process DATES keywords ##############
 
