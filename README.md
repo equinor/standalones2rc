@@ -9,12 +9,12 @@
 The command
 
 ```
-standalones2rc ./RC_model_output_folder RNB2020 master.sch summary.inc --datafiles ./some/path1/LOREM.DATA ./some/path2/IPSUM.DATA --slavenames LOR IPS --cpus 4 2 
+standalones2rc ./RC_model_output_folder RNB2020 master.sch summary.inc --datafiles ./some/path1/LOREM.DATA ./some/path2/IPSUM.DATA --slavenames LOR IPS --cpus 4 2
 ```
 will create a RC model in the folder `./RC_model_output_folder` with simulation case name `RNB2020` from the standalone models `LOREM.DATA` and `IPSUM.DATA`. The slave names to these two input standalone models will be `LOR` and `IPS` in the RC model. In this example, the RC model will be configured such that the two slaves will be using 4 and 2 CPUs, respectively.
 
-The slave names can be almost arbitrary strings (maximum 8 characters), as long as all slave names are unique (in addition, the name `MASTER` is not a valid slave name as this name is used for the automatically generated master `.DATA` file). 
- 
+The slave names can be almost arbitrary strings (maximum 8 characters), as long as all slave names are unique (in addition, the name `MASTER` is not a valid slave name as this name is used for the automatically generated master `.DATA` file).
+
 The input file `master.sch` is a schedule file given by the user, which will automatically be merged with schedule keywords created by `standalones2rc`. The file `summary.inc` will be included in the summary section of the `MASTER` model.
 
 After running the command, a directory structure similar to the one below will automatically be created:
@@ -63,6 +63,7 @@ Since we create quite some extra dummy groups, the third argument in the keyword
 * The start date of the master `.DATA` file is set to be the earliest start date among the slaves.
 * A `SLAVES` entry is added to the Eclipse master model, defining the slave names and corresponding `.DATA` files.
 * All instances of `GRUPNET` and `GCONPROD` in the standalones are commented out when converting them to slaves.
+* All actions (`ACTIONX`, `ACTION`, `ACTIONR`, `ACTIONW`, `ACTIONS` and `DELAYACT`) in the standalones are commented out when converting them to slaves, as most actions are dependent on parameters upstream of slot well, which is handled in the master. Exception to this rule if the keyword is followed by one of the following comments on the same line: `-- keep in rc model` or `-- keep in reservoir coupled model`.
 * As it is an simulator requirement, all the dummy groups get automatically a `GCONPROD` or `GCONINJE` entry with default values (i.e. they are transparent to higher level groups guide rates).
 * The `PARALLEL` keyword in each slave is changed/removed/added according to the user specified number of CPUs (using the `--cpu` argument to `standalones2rc`).
 
@@ -74,9 +75,9 @@ You need `Python3` to run this tool. Internally in Equinor, you can get it to ru
 ```cshell
 setenv MY_NEW_VENV ./some_path_where_i_want_my_new_venv
 
-setenv PYTHON_VERSION "3.6.4"
+source /prog/res/komodo/stable/enable.csh
 source /prog/sdpsoft/env.csh
-python3 -m virtualenv --no-site-packages $MY_NEW_VENV
+python -m virtualenv $MY_NEW_VENV
 source $MY_NEW_VENV/bin/activate.csh
 ```
 
