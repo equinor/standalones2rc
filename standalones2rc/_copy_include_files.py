@@ -151,7 +151,7 @@ def copy_include_files(
             if line == "ENDACTIO":
                 IN_ACTION -= 1
             content[j] = "-- commented out by standalones2rc: " + content[j]
-        elif line == "ENDACTION":  # ENDACTION without being in an action
+        elif line == "ENDACTIO":  # ENDACTIO without being in an action
             raise ValueError(
                 "Encountered ENDACTIO without a preceding action keyword:"
                 "ACTION, ACTIONR, ACTIONW, ACTIONS, ACTIONX, DELAYACT."
