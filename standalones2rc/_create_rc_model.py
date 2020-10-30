@@ -97,7 +97,7 @@ def create_rc_model(
     slave_keywords = {}
 
     if slavesch is not None:
-        f = open(args.slavesch, "r")
+        f = open(slavesch, "r")
         content = f.readlines()
         f.close()
 
@@ -193,7 +193,8 @@ def create_rc_model(
         # DO CHANGES TO THE CONTENT
 
         f = open(
-            outputfolder + "/model/" + casename + "_" + slavenames[i] + ".DATA", "w",
+            outputfolder + "/model/" + casename + "_" + slavenames[i] + ".DATA",
+            "w",
         )
         f.write("\n".join(content))
         f.close()
