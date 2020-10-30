@@ -40,6 +40,7 @@ def create_rc_model(
 
     os.makedirs(outputfolder + "/model")
     os.makedirs(outputfolder + "/include/runspec")
+    os.makedirs(outputfolder + "/include/schedule")
 
     # Parse the GRUPTREE in the user given master .sch file:
 
@@ -148,11 +149,12 @@ def create_rc_model(
 
     INJECTORS = set()
 
-    for i, standalone in enumerate(datafiles):
+    slave_outputfolders = {}
+    for standalone, slavename in zip(datafiles, slavenames):
 
-        GRUPSLAV = {slavenames[i]: {}}
-        KEYWORD_LINES[slavenames[i]] = {}
-        PARALLEL[slavenames[i]] = False
+        GRUPSLAV = {slavename: {}}
+        KEYWORD_LINES[slavename] = {}
+        PARALLEL[slavename] = False
         MISSING_WCON = set([])
 
         SLAVE_SCH = copy.copy(slave_keywords)
@@ -162,18 +164,23 @@ def create_rc_model(
         except:
             raise RuntimeError("Could not read standalone .DATA file " + standalone)
 
+        slave_outputfolders[slavename] = (
+            outputfolder.rstrip("/") + f"/slaves/{slavename.lower()}/eclipse"
+        )
+        os.makedirs(slave_outputfolders[slavename] + "/model")
+        os.makedirs(slave_outputfolders[slavename] + "/include/runspec")
         (content, _, _) = copy_include_files(
             standalone,
             schfile,
             section_dictionary(content),
-            slavenames[i],
+            slavename,
             0,
             {"prev_numdate": 0, "file": None, "linenumber": 0},
             START_NUMDATE,
             standalone,
             KEYWORD_LINES,
             EXTRA_DATES,
-            outputfolder,
+            slave_outputfolders[slavename],
             PARALLEL,
             cpus,
             slavenames,
@@ -190,34 +197,39 @@ def create_rc_model(
         # DO CHANGES TO THE CONTENT
 
         with open(
-            outputfolder + "/model/" + casename + "_" + slavenames[i] + ".DATA", "w"
+            slave_outputfolders[slavename]
+            + "/model/"
+            + casename
+            + "_"
+            + slavename
+            + ".DATA",
+            "w",
         ) as filehandle:
             filehandle.write("\n".join(content))
 
         if len(MISSING_WCON) > 0:
             print(
                 "WARNING: The following wells in standalone "
-                + slavenames[i]
+                + slavename
                 + " do not have a WCONPROD or WCONINJE: "
                 + ", ".join(sorted(list(MISSING_WCON)))
                 + ". You should add a WCONPROD and/or WCONINJE for these wells and run standalones2rc again (standalones2rc only creates the RC required GCONPROD/GCONINJE entries for each WCONPROD/WCONINJE it meets in the standalones)."
             )
 
-        print("Copied over all INCLUDE files to be used for slave " + slavenames[i])
+        print("Copied over all INCLUDE files to be used for slave " + slavename)
 
     # Create the different automatically created include files:
 
-    for i, standalone in enumerate(datafiles):
-
+    for slavename in slavenames:
         with open(
-            outputfolder
+            slave_outputfolders[slavename]
             + "/include/runspec/"
-            + slavenames[i].lower()
+            + slavename.lower()
             + ".welldims.inc",
             "w",
         ) as filehandle:
             filehandle.write("WELLDIMS\n ")
-            for argument in KEYWORD_LINES[slavenames[i]]["WELLDIMS"]["arguments"]:
+            for argument in KEYWORD_LINES[slavename]["WELLDIMS"]["arguments"]:
                 filehandle.write(str(argument) + " ")
             filehandle.write(" /\n")
 
@@ -225,20 +237,16 @@ def create_rc_model(
     ## CREATE THE MASTER .DATA FILE ##
     ##################################
 
-    with open(outputfolder + "/model/" + casename + "_MASTER.DATA", "w") as filehandle:
-        filehandle.write(
-            "".join(
-                master_datafile(
-                    summaryfile,
-                    outputfolder,
-                    START_NUMDATE,
-                    casename,
-                    slavenames,
-                    cpus,
-                    MASTER_GRUPTREE,
-                )
-            )
-        )
+    master_datafile(
+        outputfolder + "/model/" + casename + "_MASTER.DATA",
+        summaryfile,
+        outputfolder,
+        START_NUMDATE,
+        casename,
+        slavenames,
+        cpus,
+        MASTER_GRUPTREE,
+    )
 
     # Create the GRUPTREE keyword in a schedule file
 
@@ -373,15 +381,17 @@ def create_rc_model(
     #####################################
     # CREATE DUMMY MASTER INCLUDE FILES #
     #####################################
-
+    os.makedirs(outputfolder + "/include/solution")
     shutil.copy(
         MODULE_FOLDER / "static" / "master_dummy_solution.inc",
         outputfolder + "/include/solution/master.dummy.inc",
     )
+    os.makedirs(outputfolder + "/include/grid")
     shutil.copy(
         MODULE_FOLDER / "static" / "master_dummy_grid.inc",
         outputfolder + "/include/grid/master.dummy.inc",
     )
+    os.makedirs(outputfolder + "/include/props")
     shutil.copy(
         MODULE_FOLDER / "static" / "master_dummy_props.inc",
         outputfolder + "/include/props/master.dummy.inc",

@@ -18,6 +18,7 @@ master_template = template_environment.get_template("RC_MASTER.DATA.jinja2")
 
 
 def master_datafile(
+    datafile,
     summaryfile,
     outputfolder,
     START_NUMDATE,
@@ -30,6 +31,8 @@ def master_datafile(
     summary_filename = os.path.basename(summaryfile)
     if not summary_filename.startswith("master."):
         summary_filename = "master." + summary_filename
+
+    os.makedirs(outputfolder + "/include/summary/")
     shutil.copyfile(summaryfile, outputfolder + "/include/summary/" + summary_filename)
 
     master_start_numdate = np.inf
@@ -63,21 +66,15 @@ def master_datafile(
 
     SLAVES = "\n\nSLAVES\n"
 
-    for i in range(len(slavenames)):
+    for (slavename, ncpu) in zip(slavenames, cpus):
         SLAVES += (
-            " '"
-            + slavenames[i]
-            + "'    '"
-            + casename
-            + "_"
-            + slavenames[i]
-            + "'    '*'    './'      "
-            + str(cpus[i])
-            + " /\n"
+            f" '{slavename}'    '{casename}_{slavename}'    '*'    "
+            f"'../slaves/{slavename.lower()}/eclipse/model'    {str(ncpu)} /\n"
         )
 
     SLAVES += "/\n\n"
 
     content = content[:SCHEDULE] + [SLAVES] + content[SCHEDULE:]
 
-    return "\n".join(content)
+    with open(datafile, "w") as filehandle:
+        filehandle.write("\n".join(content))
