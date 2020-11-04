@@ -62,6 +62,8 @@ def copy_include_files(
     IN_RPTRST = False
     IN_GEFAC = False
     IN_WEFAC = False
+    IN_GECON = False
+    IN_WECON = False
 
     for j, line in enumerate(content):
 
@@ -399,6 +401,27 @@ def copy_include_files(
         elif IN_WEFAC:
             content[j] = "-- commented out by standalones2rc: " + content[j]
 
+        ############## Process GECON keywords #############
+
+        elif line == "GECON":
+            IN_GECON = True
+            content[j] = "-- commented out by standalones2rc: " + content[j]
+        elif IN_GECON and line == "/":
+            IN_GECON = False
+            content[j] = "-- commented out by standalones2rc: " + content[j]
+        elif IN_GECON:
+            content[j] = "-- commented out by standalones2rc: " + content[j]
+
+        ############## Process WECON keywords #############
+
+        elif line == "WECON":
+            IN_WECON = True
+            content[j] = "-- commented out by standalones2rc: " + content[j]
+        elif IN_WECON and line == "/":
+            IN_WECON = False
+            content[j] = "-- commented out by standalones2rc: " + content[j]
+        elif IN_WECON:
+            content[j] = "-- commented out by standalones2rc: " + content[j]
         ############## Process WCONPROD keywords #############
 
         elif line == "WCONPROD":
