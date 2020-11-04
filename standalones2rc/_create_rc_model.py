@@ -40,12 +40,12 @@ def create_rc_model(
 
     os.makedirs(outputfolder + "/model")
     os.makedirs(outputfolder + "/include/runspec")
+    os.makedirs(outputfolder + "/include/schedule")
 
     # Parse the GRUPTREE in the user given master .sch file:
 
-    f = open(schfile, "r", encoding="utf-8", errors="ignore")
-    content = f.readlines()
-    f.close()
+    with open(schfile, "r", encoding="utf-8", errors="ignore") as filehandle:
+        content = filehandle.readlines()
 
     content = [x.strip() for x in content]
 
@@ -97,9 +97,8 @@ def create_rc_model(
     slave_keywords = {}
 
     if slavesch is not None:
-        f = open(args.slavesch, "r")
-        content = f.readlines()
-        f.close()
+        with open(slavesch, "r", encoding="utf-8", errors="ignore") as filehandle:
+            content = filehandle.readlines()
 
         content = [x.strip() for x in content]
 
@@ -150,33 +149,38 @@ def create_rc_model(
 
     INJECTORS = set()
 
-    for i, standalone in enumerate(datafiles):
+    slave_outputfolders = {}
+    for standalone, slavename in zip(datafiles, slavenames):
 
-        GRUPSLAV = {slavenames[i]: {}}
-        KEYWORD_LINES[slavenames[i]] = {}
-        PARALLEL[slavenames[i]] = False
+        GRUPSLAV = {slavename: {}}
+        KEYWORD_LINES[slavename] = {}
+        PARALLEL[slavename] = False
         MISSING_WCON = set([])
 
         SLAVE_SCH = copy.copy(slave_keywords)
         try:
-            f = open(standalone, "r")
-            content = f.readlines()
-            f.close()
+            with open(standalone, "r", encoding="utf-8", errors="ignore") as filehandle:
+                content = filehandle.readlines()
         except:
             raise RuntimeError("Could not read standalone .DATA file " + standalone)
 
+        slave_outputfolders[slavename] = (
+            outputfolder.rstrip("/") + f"/slaves/{slavename.lower()}/eclipse"
+        )
+        os.makedirs(slave_outputfolders[slavename] + "/model")
+        os.makedirs(slave_outputfolders[slavename] + "/include/runspec")
         (content, _, _) = copy_include_files(
             standalone,
             schfile,
             section_dictionary(content),
-            slavenames[i],
+            slavename,
             0,
             {"prev_numdate": 0, "file": None, "linenumber": 0},
             START_NUMDATE,
             standalone,
             KEYWORD_LINES,
             EXTRA_DATES,
-            outputfolder,
+            slave_outputfolders[slavename],
             PARALLEL,
             cpus,
             slavenames,
@@ -192,138 +196,140 @@ def create_rc_model(
 
         # DO CHANGES TO THE CONTENT
 
-        f = open(
-            outputfolder + "/model/" + casename + "_" + slavenames[i] + ".DATA", "w",
-        )
-        f.write("\n".join(content))
-        f.close()
+        with open(
+            slave_outputfolders[slavename]
+            + "/model/"
+            + casename
+            + "_"
+            + slavename
+            + ".DATA",
+            "w",
+        ) as filehandle:
+            filehandle.write("\n".join(content))
 
         if len(MISSING_WCON) > 0:
             print(
                 "WARNING: The following wells in standalone "
-                + slavenames[i]
+                + slavename
                 + " do not have a WCONPROD or WCONINJE: "
                 + ", ".join(sorted(list(MISSING_WCON)))
                 + ". You should add a WCONPROD and/or WCONINJE for these wells and run standalones2rc again (standalones2rc only creates the RC required GCONPROD/GCONINJE entries for each WCONPROD/WCONINJE it meets in the standalones)."
             )
 
-        print("Copied over all INCLUDE files to be used for slave " + slavenames[i])
+        print("Copied over all INCLUDE files to be used for slave " + slavename)
 
     # Create the different automatically created include files:
 
-    for i, standalone in enumerate(datafiles):
-
-        f = open(
-            outputfolder
+    for slavename in slavenames:
+        with open(
+            slave_outputfolders[slavename]
             + "/include/runspec/"
-            + slavenames[i].lower()
+            + slavename.lower()
             + ".welldims.inc",
             "w",
-        )
-        f.write("WELLDIMS\n ")
-        for argument in KEYWORD_LINES[slavenames[i]]["WELLDIMS"]["arguments"]:
-            f.write(str(argument) + " ")
-        f.write(" /\n")
-        f.close()
+        ) as filehandle:
+            filehandle.write("WELLDIMS\n ")
+            for argument in KEYWORD_LINES[slavename]["WELLDIMS"]["arguments"]:
+                filehandle.write(str(argument) + " ")
+            filehandle.write(" /\n")
 
     ##################################
     ## CREATE THE MASTER .DATA FILE ##
     ##################################
 
-    f = open(outputfolder + "/model/" + casename + "_MASTER.DATA", "w")
-    f.write(
-        "".join(
-            master_datafile(
-                summaryfile,
-                outputfolder,
-                START_NUMDATE,
-                casename,
-                slavenames,
-                cpus,
-                MASTER_GRUPTREE,
-            )
-        )
+    master_datafile(
+        outputfolder + "/model/" + casename + "_MASTER.DATA",
+        summaryfile,
+        outputfolder,
+        START_NUMDATE,
+        casename,
+        slavenames,
+        cpus,
+        MASTER_GRUPTREE,
     )
-    f.close()
 
     # Create the GRUPTREE keyword in a schedule file
 
-    f = open(outputfolder + "/include/schedule/master.gruptree.sch", "w")
-    f.write(
-        "--+ The content in this file has already automatically been merged into ./master.sch\n\n"
-    )
+    with open(
+        outputfolder + "/include/schedule/master.gruptree.sch", "w"
+    ) as filehandle:
+        filehandle.write(
+            "--+ The content in this file has already automatically been merged into ./master.sch\n\n"
+        )
 
-    for numdate in sorted(GRUPTREE):
-        if numdate > 0:
-            datestring = num2date(numdate).strftime("%d '%b' %Y %H:%M:%S").upper()
-            if "00:00:00" in datestring:
-                datestring = datestring[: datestring.find(" 00:00:00")]
-            datestring = "DATES\n  " + datestring + "/\n/\n\n"
-            f.write(datestring)
+        for numdate in sorted(GRUPTREE):
+            if numdate > 0:
+                datestring = num2date(numdate).strftime("%d '%b' %Y %H:%M:%S").upper()
+                if "00:00:00" in datestring:
+                    datestring = datestring[: datestring.find(" 00:00:00")]
+                datestring = "DATES\n  " + datestring + "/\n/\n\n"
+                filehandle.write(datestring)
 
-        f.write("\n\n-- added by standalones2rc:\nGRUPTREE\n")
-        for (group1, group2) in GRUPTREE[numdate]:
-            f.write("  '" + group1 + "' '" + group2 + "' /\n")
-        f.write("/\n\n")
+            filehandle.write("\n\n-- added by standalones2rc:\nGRUPTREE\n")
+            for (group1, group2) in GRUPTREE[numdate]:
+                filehandle.write("  '" + group1 + "' '" + group2 + "' /\n")
+            filehandle.write("/\n\n")
 
-        f.write("\n\n-- added by standalones2rc:\nGRUPNET\n")
-        for (group1, group2) in GRUPTREE[numdate]:
-            f.write("  '" + group1 + "'  1*  9999 /\n")
-        f.write("/\n\n")
+            filehandle.write("\n\n-- added by standalones2rc:\nGRUPNET\n")
+            for (group1, group2) in GRUPTREE[numdate]:
+                filehandle.write("  '" + group1 + "'  1*  9999 /\n")
+            filehandle.write("/\n\n")
 
-        GNETINJE = ""
-        for (group1, group2) in GRUPTREE[numdate]:
-            if group1 in INJECTORS:
-                GNETINJE += "  '" + group1 + "' 'GAS'  1*  9999 /\n"
+            GNETINJE = ""
+            for (group1, group2) in GRUPTREE[numdate]:
+                if group1 in INJECTORS:
+                    GNETINJE += "  '" + group1 + "' 'GAS'  1*  9999 /\n"
 
-        if GNETINJE != "":
-            f.write("\n\n-- added by standalones2rc:\nGNETINJE\n" + GNETINJE + "/\n\n")
-
-    f.close()
+            if GNETINJE != "":
+                filehandle.write(
+                    "\n\n-- added by standalones2rc:\nGNETINJE\n" + GNETINJE + "/\n\n"
+                )
 
     # Create the GCONPROD keyword in a schedule file
 
-    f = open(outputfolder + "/include/schedule/master.gconprod.sch", "w")
-    f.write(
-        "--+ The content in this file has already automatically been merged into ./master.sch\n\n"
-    )
+    with open(
+        outputfolder + "/include/schedule/master.gconprod.sch", "w"
+    ) as filehandle:
+        filehandle.write(
+            "--+ The content in this file has already automatically been merged into ./master.sch\n\n"
+        )
 
-    for numdate in sorted(GCONPROD):
-        if numdate > 0:
-            datestring = num2date(numdate).strftime("%d '%b' %Y %H:%M:%S").upper()
-            if "00:00:00" in datestring:
-                datestring = datestring[: datestring.find(" 00:00:00")]
-            datestring = "DATES\n  " + datestring + "/\n/\n\n"
-            f.write(datestring)
+        for numdate in sorted(GCONPROD):
+            if numdate > 0:
+                datestring = num2date(numdate).strftime("%d '%b' %Y %H:%M:%S").upper()
+                if "00:00:00" in datestring:
+                    datestring = datestring[: datestring.find(" 00:00:00")]
+                datestring = "DATES\n  " + datestring + "/\n/\n\n"
+                filehandle.write(datestring)
 
-        f.write("\n\n-- added by standalones2rc:\nGCONPROD\n")
-        for group in GCONPROD[numdate]:
-            f.write("  '" + group + "' 'FLD' 7* 'POTN' /\n")
-        f.write("/\n\n")
-
-    f.close()
+            filehandle.write("\n\n-- added by standalones2rc:\nGCONPROD\n")
+            for group in GCONPROD[numdate]:
+                filehandle.write("  '" + group + "' 'FLD' 7* 'POTN' /\n")
+            filehandle.write("/\n\n")
 
     # Create the GCONINJE keyword in a schedule file
 
-    f = open(outputfolder + "/include/schedule/master.gconinje.sch", "w")
-    f.write(
-        "--+ The content in this file has already automatically been merged into ./master.sch\n\n"
-    )
+    with open(
+        outputfolder + "/include/schedule/master.gconinje.sch", "w"
+    ) as filehandle:
+        filehandle.write(
+            "--+ The content in this file has already automatically been merged into ./master.sch\n\n"
+        )
 
-    for numdate in sorted(GCONINJE):
-        if numdate > 0:
-            datestring = num2date(numdate).strftime("%d '%b' %Y %H:%M:%S").upper()
-            if "00:00:00" in datestring:
-                datestring = datestring[: datestring.find(" 00:00:00")]
-            datestring = "DATES\n  " + datestring + "/\n/\n\n"
-            f.write(datestring)
+        for numdate in sorted(GCONINJE):
+            if numdate > 0:
+                datestring = num2date(numdate).strftime("%d '%b' %Y %H:%M:%S").upper()
+                if "00:00:00" in datestring:
+                    datestring = datestring[: datestring.find(" 00:00:00")]
+                datestring = "DATES\n  " + datestring + "/\n/\n\n"
+                filehandle.write(datestring)
 
-        f.write("\n\n-- added by standalones2rc:\nGCONINJE\n")
-        for (group, phase) in GCONINJE[numdate]:
-            f.write("  '" + group + "' '" + phase + "'  'FLD'  5*  1  'RATE' /\n")
-        f.write("/\n\n")
-
-    f.close()
+            filehandle.write("\n\n-- added by standalones2rc:\nGCONINJE\n")
+            for (group, phase) in GCONINJE[numdate]:
+                filehandle.write(
+                    "  '" + group + "' '" + phase + "'  'FLD'  5*  1  'RATE' /\n"
+                )
+            filehandle.write("/\n\n")
 
     # Create the GRUPMAST keywords in a schedule file:
 
@@ -334,31 +340,31 @@ def create_rc_model(
 
         numdates[GRUPMAST[well_name]["numdate"]].append(well_name)
 
-    f = open(outputfolder + "/include/schedule/master.grupmast.sch", "w")
+    with open(
+        outputfolder + "/include/schedule/master.grupmast.sch", "w"
+    ) as filehandle:
 
-    for numdate in sorted(numdates):
-        if numdate > 0:
-            datestring = num2date(numdate).strftime("%d '%b' %Y %H:%M:%S").upper()
-            if "00:00:00" in datestring:
-                datestring = datestring[: datestring.find(" 00:00:00")]
-            datestring = "DATES\n  " + datestring + "/\n/\n\n"
-            f.write(datestring)
+        for numdate in sorted(numdates):
+            if numdate > 0:
+                datestring = num2date(numdate).strftime("%d '%b' %Y %H:%M:%S").upper()
+                if "00:00:00" in datestring:
+                    datestring = datestring[: datestring.find(" 00:00:00")]
+                datestring = "DATES\n  " + datestring + "/\n/\n\n"
+                filehandle.write(datestring)
 
-        f.write("-- added by standalones2rc:\nGRUPMAST\n")
-        for well_name in numdates[numdate]:
-            f.write(
-                "  '"
-                + well_name
-                + "' '"
-                + GRUPMAST[well_name]["slavename"]
-                + "' '"
-                + well_name
-                + "' 0.1 /\n"
-            )
+            filehandle.write("-- added by standalones2rc:\nGRUPMAST\n")
+            for well_name in numdates[numdate]:
+                filehandle.write(
+                    "  '"
+                    + well_name
+                    + "' '"
+                    + GRUPMAST[well_name]["slavename"]
+                    + "' '"
+                    + well_name
+                    + "' 0.1 /\n"
+                )
 
-        f.write("/\n\n")
-
-    f.close()
+            filehandle.write("/\n\n")
 
     # Merge the different schedule files:
 
@@ -375,15 +381,17 @@ def create_rc_model(
     #####################################
     # CREATE DUMMY MASTER INCLUDE FILES #
     #####################################
-
+    os.makedirs(outputfolder + "/include/solution")
     shutil.copy(
         MODULE_FOLDER / "static" / "master_dummy_solution.inc",
         outputfolder + "/include/solution/master.dummy.inc",
     )
+    os.makedirs(outputfolder + "/include/grid")
     shutil.copy(
         MODULE_FOLDER / "static" / "master_dummy_grid.inc",
         outputfolder + "/include/grid/master.dummy.inc",
     )
+    os.makedirs(outputfolder + "/include/props")
     shutil.copy(
         MODULE_FOLDER / "static" / "master_dummy_props.inc",
         outputfolder + "/include/props/master.dummy.inc",
