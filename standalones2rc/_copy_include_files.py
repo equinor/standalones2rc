@@ -321,17 +321,19 @@ def copy_include_files(
             current_numdate = date2num(datetime.strptime(date, "%d %b %Y %H:%M:%S"))
 
             for numdate in sorted(SLAVE_SCH):
+                if numdate < START_NUMDATE[slavename] and numdate != 0:
+                    continue
                 if (
                     prev_numdate["prev_numdate"] == numdate
                     and numdate < current_numdate
                 ):
                     if FIRST_DATE[0]:
                         content[FIRST_DATE[1]] = (
-                            SLAVE_SCH[numdate] + "\n" + content[FIRST_DATE[1]]
+                            SLAVE_SCH[numdate] + content[FIRST_DATE[1]]
                         )
                     else:
                         content[j] = (
-                            "/\n" + SLAVE_SCH[numdate] + "\n\nDATES\n" + content[j]
+                            "/\n" + SLAVE_SCH[numdate] + "\nDATES\n" + content[j]
                         )
 
                     del SLAVE_SCH[numdate]
@@ -345,23 +347,30 @@ def copy_include_files(
                     )
                     if "00:00:00" in datestring:
                         datestring = datestring[: datestring.find(" 00:00:00")]
+                    datestring = f"--added by standalones2rc from slavesch:\nDATES\n{datestring}/\n/\n"
 
                     if FIRST_DATE[0]:
-                        content[FIRST_DATE[1]] = (
-                            "DATES\n"
-                            + datestring
-                            + "/\n/\n\n"
-                            + SLAVE_SCH[numdate]
-                            + "\n"
-                            + content[FIRST_DATE[1]]
-                        )
+                        content_parts = content[FIRST_DATE[1]].rpartition("DATES")
+                        if numdate == START_NUMDATE[slavename]:
+                            content[FIRST_DATE[1]] = (
+                                content_parts[0]
+                                + SLAVE_SCH[numdate]
+                                + "".join(content_parts[1:])
+                            )
+                        else:
+                            content[FIRST_DATE[1]] = (
+                                content_parts[0]
+                                + datestring
+                                + SLAVE_SCH[numdate]
+                                + "".join(content_parts[1:])
+                            )
                     else:
+                        content_parts = content[j].rpartition("DATES")
                         content[j] = (
-                            datestring
-                            + "/\n/\n\n"
+                            content_parts[0]
+                            + datestring
                             + SLAVE_SCH[numdate]
-                            + "\n\nDATES\n"
-                            + content[j]
+                            + "".join(content_parts[1:])
                         )
 
                     del SLAVE_SCH[numdate]
