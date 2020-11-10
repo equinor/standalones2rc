@@ -24,7 +24,14 @@ def read_schedule_file(filename):
         elif in_dates_keyword and "/" in line and line.strip()[0] == "/":
             in_dates_keyword = False
         elif in_dates_keyword and line.partition("--")[0].strip() != "":
-            date = line.replace("'", "").replace("/", "").replace("JLY", "JUL").strip()
+            date = (
+                line.partition("--")[0]
+                .strip()
+                .replace("'", "")
+                .replace("/", "")
+                .replace("JLY", "JUL")
+                .strip()
+            )
 
             if not ":" in date:
                 date += " 00:00:00"
