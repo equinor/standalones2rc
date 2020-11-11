@@ -106,7 +106,7 @@ def create_rc_model(
 
         numdate = 0
 
-        for j, line in enumerate(content):
+        for line in content:
 
             line = line.partition("--")[0].strip()
             comment = line.partition("--")[1].strip()
@@ -130,9 +130,14 @@ def create_rc_model(
 
             else:
                 if not numdate in slave_keywords:
-                    slave_keywords[numdate] = "" + "\n"
-                else:
-                    slave_keywords[numdate] += content[j] + " " + comment + "\n"
+                    slave_keywords[numdate] = "\n"
+                slave_keywords[numdate] += line + (f" {comment}" if comment else "")
+
+                if line not in ["", "\n"] or comment:
+                    slave_keywords[
+                        numdate
+                    ] += "        -- added by standalones2rc from slavesch"
+                slave_keywords[numdate] += "\n"
 
     # Create the different slave .DATA-files and copy over include files:
 
