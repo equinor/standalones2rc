@@ -448,9 +448,10 @@ def copy_include_files(
             MISSING_WCON.discard(dummy_well_group)
 
             if not wconprod and not "GRUP" in data[2]:
-                control_mode = data[2]
                 if "*" in data[2] and data[2] != "*":
                     data[2] = "'GRUP' " + str(int(data[2][0]) - 1) + "*"
+                elif data[2] == "/":
+                    data[2] = "'GRUP' /"
                 else:
                     data[2] = "'GRUP'"
 
