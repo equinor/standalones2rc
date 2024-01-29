@@ -68,7 +68,6 @@ def copy_include_files(
     IN_WECON = False
 
     for j, line in enumerate(content):
-
         if isinstance(section, dict):
             current_section = section[j]
 
@@ -251,7 +250,6 @@ def copy_include_files(
             # Add well/group to GRUPMAST. Raise error if well is already present in another slave/standalone.
             if not wellname in GRUPMAST:
                 MISSING_WCON.add(wellname)
-
                 KEYWORD_LINES[slavename]["WELLDIMS"]["arguments"][
                     2
                 ] += 1  # Increase the number of GROUPS in the slave by 1
@@ -393,26 +391,26 @@ def copy_include_files(
             content[j] = "-- commented out by standalones2rc: " + content[j]
 
         ############## Process GEFAC keywords #############
-        elif not gefac: # skip GEFAC keywords
-            if line == "GEFAC":
-                IN_GEFAC = True
-                content[j] = "-- commented out by standalones2rc: " + content[j]
-            elif IN_GEFAC and line == "/":
-                IN_GEFAC = False
-                content[j] = "-- commented out by standalones2rc: " + content[j]
-            elif IN_GEFAC:
-                content[j] = "-- commented out by standalones2rc: " + content[j]
+
+        elif line == "GEFAC" and not gefac:
+            IN_GEFAC = True
+            content[j] = "-- commented out by standalones2rc: " + content[j]
+        elif IN_GEFAC and line == "/" and not gefac:
+            IN_GEFAC = False
+            content[j] = "-- commented out by standalones2rc: " + content[j]
+        elif IN_GEFAC and not gefac:
+            content[j] = "-- commented out by standalones2rc: " + content[j]
 
         ############## Process WEFAC keywords #############
-        elif not wefac: # skip wefac keywords
-            if line == "WEFAC":
-                IN_WEFAC = True
-                content[j] = "-- commented out by standalones2rc: " + content[j]
-            elif IN_WEFAC and line == "/":
-                IN_WEFAC = False
-                content[j] = "-- commented out by standalones2rc: " + content[j]
-            elif IN_WEFAC:
-                content[j] = "-- commented out by standalones2rc: " + content[j]
+
+        elif line == "WEFAC" and not wefac:
+            IN_WEFAC = True
+            content[j] = "-- commented out by standalones2rc: " + content[j]
+        elif IN_WEFAC and line == "/" and not wefac:
+            IN_WEFAC = False
+            content[j] = "-- commented out by standalones2rc: " + content[j]
+        elif IN_WEFAC and not wefac:
+            content[j] = "-- commented out by standalones2rc: " + content[j]
 
         ############## Process GECON keywords #############
 
