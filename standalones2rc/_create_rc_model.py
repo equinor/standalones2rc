@@ -27,6 +27,8 @@ def create_rc_model(
     cpus,
     rptrst,
     wconprod,
+    wefac,
+    gefac,
     slavesch=None,
 ):
 
@@ -197,6 +199,8 @@ def create_rc_model(
             SLAVE_SCH,
             GCONPROD,
             wconprod,
+            wefac,
+            gefac,
         )
 
         # DO CHANGES TO THE CONTENT

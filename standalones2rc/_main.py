@@ -57,6 +57,18 @@ def main():
         default=False,
     )
     parser.add_argument(
+        "--wefac",
+        action="store_true",
+        help="Keep original WEFAC in slaves (otherwise removed).",
+        default=False,
+    )
+    parser.add_argument(
+        "--gefac",
+        action="store_true",
+        help="Keep original GEFAC in slaves (otherwise removed).",
+        default=False,
+    )
+    parser.add_argument(
         "--slavesch",
         type=str,
         help="File containing additional schedule keywords for the slaves.",
@@ -105,4 +117,6 @@ def main():
         slavenames=args.slavenames,
         rptrst=args.rptrst,
         wconprod=args.wconprod,
+        wefac=args.wefac,
+        gefac=args.gefac,
     )
